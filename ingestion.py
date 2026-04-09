@@ -1,88 +1,120 @@
-import re
+
+import math
 from collections import Counter
 
-class SlidingWindow:
-    def __init__(self, window_size=500, overlap=100):
-        self.window_size = window_size
-        self.overlap = overlap
-
-    def split(self, text):
-        chunks = []
-        step = self.window_size - self.overlap
-        for i in range(0, len(text), step):
-            chunks.append(text[i:i+self.window_size])
-        return chunks
-
-
-class KnowledgePyramid:
-    def __init__(self):
-        self.entries = []
-
-    def summarize(self, chunk):
-        sentences = re.split(r'[.!?]', chunk)
-        return '. '.join(sentences[:2]).strip()
-
-    def categorize(self, chunk):
-        text = chunk.lower()
-        if "math" in text:
-            return "Mathematics"
-        elif "ai" in text:
-            return "AI/ML"
-        elif "law" in text:
-            return "Legal"
+# Create overlapping text chunks
+def sliding_window(text, window_size=200, overlap=50):
+    chunks = []
+    step = window_size - overlap
+    for i in range(0, len(text), step):
+        chunk = text[i:i + window_size]
+        if chunk:
+            chunks.append(chunk)
+    return chunks
+# Generate short summary for each chunk
+def summarize(chunk):
+    return chunk[:75] + "..." if len(chunk) > 75 else chunk
+# Basic keyword-based classification
+def classify(chunk):
+    chunk_lower = chunk.lower()
+    if "ai" in chunk_lower or "machine learning" in chunk_lower:
+        return "Technology"
+    elif "finance" in chunk_lower:
+        return "Finance"
+    elif "health" in chunk_lower:
+        return "Healthcare"
+    else:
         return "General"
 
-    def distill(self, chunk):
-        words = re.findall(r'\w+', chunk.lower())
-        common = Counter(words).most_common(5)
-        return [w for w, _ in common]
+# Extract simple keyword set
 
-    def build(self, chunks):
-        for chunk in chunks:
-            self.entries.append({
-                "raw": chunk,
-                "summary": self.summarize(chunk),
-                "category": self.categorize(chunk),
-                "distilled": self.distill(chunk)
-            })
+def extract_keywords(chunk):
+    words = chunk.lower().split()
+    return list(set(words[:10]))
 
 
-class QueryEngine:
-    def similarity(self, a, b):
-        set_a = set(a.split())
-        set_b = set(b.split())
-        return len(set_a & set_b) / (len(set_a | set_b) + 1e-5)
+# Build multi-level knowledge representation
+def build_knowledge_pyramid(text):
+    chunks = sliding_window(text)
+    pyramid = []
 
-    def search(self, query, entries):
-        best_score = 0
-        best_result = None
+    for chunk in chunks:
+        entry = {
+            "raw_text": chunk,
+            "summary": summarize(chunk),
+            "category": classify(chunk),
+            "keywords": extract_keywords(chunk)
+        }
+        pyramid.append(entry)
 
-        for entry in entries:
-            for key in ["raw", "summary", "category"]:
-                score = self.similarity(query.lower(), str(entry[key]).lower())
-                if score > best_score:
-                    best_score = score
-                    best_result = (key, entry[key])
+    return pyramid
 
-            score = self.similarity(query.lower(), " ".join(entry["distilled"]))
+
+# Compute cosine similarity between two texts
+def cosine_similarity(text1, text2):
+    vec1 = Counter(text1.lower().split())
+    vec2 = Counter(text2.lower().split())
+
+    intersection = set(vec1.keys()) & set(vec2.keys())
+    dot_product = sum([vec1[x] * vec2[x] for x in intersection])
+
+    magnitude1 = math.sqrt(sum([v**2 for v in vec1.values()]))
+    magnitude2 = math.sqrt(sum([v**2 for v in vec2.values()]))
+
+    if not magnitude1 or not magnitude2:
+        return 0
+
+    return dot_product / (magnitude1 * magnitude2)
+
+# Find best matching content for query
+
+def query_pyramid(pyramid, query):
+    best_match = None
+    best_score = 0
+    best_level = None
+
+    for entry in pyramid:
+        # Check all pyramid levels
+        levels = {
+            "raw_text": entry["raw_text"],
+            "summary": entry["summary"],
+            "category": entry["category"],
+            "keywords": " ".join(entry["keywords"])
+        }
+
+        for level_name, content in levels.items():
+            score = cosine_similarity(query, content)
             if score > best_score:
                 best_score = score
-                best_result = ("distilled", entry["distilled"])
+                best_match = content
+                best_level = level_name
 
-        return best_result
+    return best_level, best_match, best_score
 
 
+# Demo execution
 if __name__ == "__main__":
-    text = """Artificial Intelligence is transforming industries. 
-    Machine learning is a subset of AI. Mathematics plays a key role in AI systems."""
+    sample_text = """
+    Artificial Intelligence is transforming industries across the world.
+    AI is widely used in healthcare for diagnosis and treatment planning.
+    In finance, AI helps in fraud detection and risk analysis.
+    Machine learning models are improving automation and efficiency.
+    """
 
-    sw = SlidingWindow()
-    chunks = sw.split(text)
+    print("🔹 Building Knowledge Pyramid...")
+    pyramid = build_knowledge_pyramid(sample_text)
 
-    kp = KnowledgePyramid()
-    kp.build(chunks)
+    print("🔹 Pyramid Size:", len(pyramid))
 
-    qe = QueryEngine()
-    result = qe.search("What is AI?")
+    query = "AI in healthcare"
+    print("\n🔹 Running Query:", query)
 
-    print("Query Result:", result)
+    level, result, score = query_pyramid(pyramid, query)
+
+    print("\n Best Match Level:", level)
+    print(" Result:", result)
+
+       
+
+    
+               
