@@ -1,85 +1,31 @@
-# Vexoo Labs – AI Engineer Assignment
+
+# Vexoo AI Engineer Assignment
 
 ## Overview
+This project implements a sliding window ingestion system and a multi-level knowledge pyramid for semantic search and retrieval.
 
-This project implements:
-
-* Document ingestion with sliding window
-* Knowledge Pyramid (4-layer architecture)
-* Query retrieval using similarity scoring
-* GSM8K fine-tuning pipeline (LoRA-based)
-* Reasoning-aware adapter design (Bonus)
-
----
+## Features
+- Sliding window text chunking
+- Knowledge pyramid (raw text, summary, category, keywords)
+- Query retrieval using cosine similarity
 
 ## Project Structure
+src/ → ingestion logic  
+logs/ → execution logs  
+docs/ → summary PDF  
 
-```
-.
-├── ingestion.py
-├── training.py
-├── summary.pdf
-├── sample_logs.txt
-├── bonus_design.txt
-└── README.md
-```
+## How to Run
+1. Open terminal
+2. Navigate to src folder:
+   cd src
+3. Run:
+   py ingestion.py
 
----
-
-## Part 1: Document Ingestion System
-
-### Features
-
-* Sliding window chunking (overlapping)
-* Knowledge Pyramid:
-
-  * Raw Text
-  * Summary
-  * Category
-  * Distilled Keywords
-* Query engine with semantic matching
-
-### Run
-
-```bash
-python ingestion.py
-```
-
----
-
-## Part 2: GSM8K Training
-
-### Features
-
-* Dataset: GSM8K
-* Model: LLaMA 3.2 (LoRA-based fine-tuning)
-* Train: 3000 samples
-* Test: 1000 samples
-
-### Run
-
-```bash
-python training.py
-```
-
----
-
-## Bonus: Reasoning Adapter
-
-Implements a routing-based system:
-
-* Classifies queries (math/legal/general)
-* Routes to specialized modules
-* Improves reasoning efficiency
-
----
-
-## Sample Output
-
-See `sample_logs.txt`
-
----
+## Example Output
+Best Match Level: raw_text  
+Similarity Score: 0.548  
 
 ## Author
-
 Archana
+
+
